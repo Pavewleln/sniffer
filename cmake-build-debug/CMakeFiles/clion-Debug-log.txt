@@ -1,0 +1,1 @@
+CMakeLists.txt not found in /home/pavel/Desktop/dlink/practic_c_second Select CMakeLists.txt
