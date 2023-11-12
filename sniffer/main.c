@@ -78,7 +78,7 @@ void process_packet(const uint8_t *data_buffer, const uint length) {
     }
 
     printf("Byte representation:\n");
-//    dump((data_buffer + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(transport_header)), length);
+    dump((data_buffer + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(transport_header)), length);
 }
 
 void portInfoTCP(void *transport_header, uint16_t total_len) {
