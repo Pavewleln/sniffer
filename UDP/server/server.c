@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     int server = Socket(AF_INET, SOCK_DGRAM, 0);
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_addr.s_addr = inet_addr("192.168.162.101");
     server_addr.sin_port = htons(SERVER_PORT);
 
     Bind(server, (struct  sockaddr*)&server_addr, sizeof(server_addr));

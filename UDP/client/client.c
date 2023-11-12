@@ -4,8 +4,8 @@
 #include <arpa/inet.h>
 #include "../include/erproc.h"
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 65535
+#define SERVER_IP " 192.168.162.87"
+#define SERVER_PORT 50000
 #define BUFFER_SIZE 1024
 
 int main(int argc, char** argv) {

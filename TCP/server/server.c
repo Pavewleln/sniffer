@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
 
     struct sockaddr_in addr = {0};
     addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(65535);
     socklen_t addrlen = sizeof addr;
     Bind(server, (struct sockaddr *) &addr, addrlen);
@@ -47,7 +48,9 @@ int main(int argc, char **argv) {
     fopen(file_name, "a+");
     int file = open(file_name, O_WRONLY);
     write(file, buf, buflen);
-    write(fd, buf, nread);
+    char *response = "Hello, client";
+    write(fd, response, nread);
+
     sleep(1);
     free(file_name);
     close(fd);
