@@ -52,7 +52,7 @@ int main() {
 void process_packet(const uint8_t *data_buffer, const uint length) {
     // Получаем указатели IP и TCP/UDP/ICMP
     struct iphdr *ip_header = (struct iphdr *) (data_buffer + sizeof(struct ethhdr));
-    void *transport_header = (void *) (ip_header + sizeof(struct iphdr));
+    void *transport_header = (void *) (data_buffer + sizeof(struct ethhdr) + sizeof(struct iphdr));
 
     // Получаем информацию заголовка IP
     char source_ip[INET_ADDRSTRLEN];
@@ -77,7 +77,6 @@ void process_packet(const uint8_t *data_buffer, const uint length) {
         printf("Unknown Protocol\n");
     }
 
-    printf("Byte representation:\n");
     dump((data_buffer + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(transport_header)), length);
 }
 
@@ -133,6 +132,7 @@ void dnsProtocol(uint16_t source_port, uint16_t destination_port, void *transpor
 }
 
 void dump(const uint8_t *data_buffer, const uint length) {
+    printf("\nByte representation:\n");
     for (uint i = 0; i < length; i++) {
         uint byte = data_buffer[i];
         printf("%02x ", byte);
