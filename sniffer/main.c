@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -9,9 +11,13 @@
 #include <netinet/ip_icmp.h>
 #include <net/ethernet.h>
 
+#define HTTP_PORT 80
+#define DNS_PORT 53
 #define BUF_SIZE 65536
 
 void dump(const uint8_t *data_buffer, const uint length);
+
+void printPayload(const uint8_t *buf);
 
 void process_packet(const uint8_t *data_buffer, const uint length);
 
@@ -40,9 +46,7 @@ int main() {
 
         struct ethhdr *eth_header = (struct ethhdr *) buffer;
         uint16_t protocol = ntohs(eth_header->h_proto);
-
         if (protocol == ETH_P_IP) {
-            sleep(1);
             process_packet(buffer, recv_length);
             printf("\n");
         }
@@ -67,14 +71,15 @@ void process_packet(const uint8_t *data_buffer, const uint length) {
     printf("IP destination: %s\n", destination_ip);
     printf("Total len: %d\n", total_len);
 
-    if (ip_header->protocol == IPPROTO_TCP) {
-        portInfoTCP(transport_header, total_len);
-    } else if (ip_header->protocol == IPPROTO_UDP) {
-        portInfoUDP(transport_header, total_len);
-    } else if (ip_header->protocol == IPPROTO_ICMP) {
-        portInfoICMP(transport_header);
-    } else {
-        printf("Unknown Protocol\n");
+    switch (ip_header->protocol) {
+        case IPPROTO_TCP:
+            portInfoTCP(transport_header, total_len);
+        case IPPROTO_UDP:
+            portInfoUDP(transport_header, total_len);
+        case IPPROTO_ICMP:
+            portInfoICMP(transport_header);
+        default:
+            printf("Unknown Protocol\n");
     }
 
     dump((data_buffer + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(transport_header)), length);
@@ -108,24 +113,30 @@ void portInfoICMP(void *transport_header) {
 }
 
 void httpProtocol(uint16_t source_port, uint16_t destination_port, void *transport_header, uint16_t total_len) {
-    if (source_port == 80 || destination_port == 80) {
+    if (source_port == HTTP_PORT || destination_port == HTTP_PORT) {
         const uint8_t *http_data = (const uint8_t *) transport_header + sizeof(struct tcphdr);
         uint http_data_len = total_len - sizeof(struct ethhdr) - sizeof(struct iphdr) - sizeof(struct tcphdr);
-        printf("HTTP data:\n");
-        dump(http_data, http_data_len);
+        printf("HTTP data:");
+        if (source_port == HTTP_PORT) {
+            printPayload(http_data);
+        }
+        if (destination_port == HTTP_PORT) {
+            dump(http_data, http_data_len);
+        }
+        exit(EXIT_FAILURE);
     }
 }
 
 void dnsProtocol(uint16_t source_port, uint16_t destination_port, void *transport_header, uint16_t total_len) {
-    if (source_port == 53 || destination_port == 53) {
+    if (source_port == DNS_PORT || destination_port == DNS_PORT) {
         const uint8_t *dns_data = (const uint8_t *) transport_header + sizeof(struct udphdr);
         uint dns_data_length = total_len - sizeof(struct iphdr) - sizeof(struct udphdr);
         uint16_t flags = ntohs(*(uint16_t *) dns_data);
         if ((flags & 0x8000) == 0) {
-            printf("DNS Request:\n");
+            printf("DNS Request:");
             dump(dns_data, dns_data_length);
         } else {
-            printf("DNS Response:\n");
+            printf("DNS Response:");
             dump(dns_data, dns_data_length);
         }
     }
@@ -152,7 +163,17 @@ void dump(const uint8_t *data_buffer, const uint length) {
             printf("\n");
         }
     }
-    printf("=======================================================");
+    printf("=======================================================\n");
+}
+
+void printPayload(const uint8_t *data_buffer) {
+    size_t str_len = strlen((char *) data_buffer);
+    size_t i = 0;
+    while (i < str_len) {
+        printf("%c", data_buffer[i]);
+        i++;
+    }
+    printf("\n");
 }
 
 int Socket(int domain, int type, int protocol) {
