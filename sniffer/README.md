@@ -2,4 +2,4 @@
 
 ### make
 
-### sudo ./sniffer TCP / UDP / ICMP / ALL
+### sudo ./sniffer (TCP / UDP / ICMP / ALL)
