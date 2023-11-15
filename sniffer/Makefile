@@ -6,7 +6,7 @@ CFLAGS = -Wall -Wextra
 
 RM = rm -rf
 
-SRCS = main.c erproc.c help.c
+SRCS = main.c erproc.c
 
 OBJS = $(SRCS:.c=.o)
 

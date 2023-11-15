@@ -1,6 +1,5 @@
 #include <time.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -17,7 +16,26 @@
 #define DNS_PORT 53
 #define BUF_SIZE 65536
 
-int total_len = 0;
+
+typedef struct {
+    uint16_t id;
+    uint16_t flags;
+    uint16_t qdcount;
+    uint16_t ancount;
+    uint16_t nscount;
+    uint16_t arcount;
+} dns_header;
+
+
+//typedef struct {
+//    char method[10];
+//    char uri[100];
+//    char host[100];
+//    char content_type[50];
+//    char content_length[20];
+//} http_header;
+
+uint total_len = 0;
 uint8_t data_buffer[BUF_SIZE];
 struct iphdr *ip_header = NULL;
 
@@ -36,29 +54,25 @@ void printInfoUDP(const char *source_ip, const char *destination_ip);
 void printInfoICMP(const char *source_ip, const char *destination_ip);
 
 void dump(const uint8_t *data_buffer, uint data_len) {
-    const char *http_data = (const char *) data_buffer;
-    const char *end_of_http_data = http_data + data_len;
-
-    while (http_data < end_of_http_data) {
-        const char *end_of_line = strchr(http_data, '\n');
-        if (end_of_line == NULL) {
-            printf("%s\n", http_data);
-            break;
-        }
-
-        size_t line_length = end_of_line - http_data;
-        printf("%.*s\n", (int) line_length, http_data);
-
-        http_data = end_of_line + 1;
+    for (uint i = 0; i < data_len; i++) {
+        printf("%c", data_buffer[i]);
     }
+    printf("\n");
 }
 
 void printInfoHTTP(uint16_t source_port, struct tcphdr *tcp_header) {
     if (source_port == HTTP_PORT) {
         const uint8_t *http_data =
-                (const uint8_t *) data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) + (tcp_header->doff * 4);
+                (const uint8_t *) (data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) + (tcp_header->doff * 4));
         uint http_data_len = total_len - sizeof(struct ethhdr) - (ip_header->ihl * 4) + (tcp_header->doff * 4);
-        printf("HTTP data:\n");
+        //        http_header *httpHeader = (http_header *) http_data;
+        //
+        //        printf("HTTP Header:\n");
+        //        printf("Method: %s\n", httpHeader->method);
+        //        printf("URI: %s\n", httpHeader->uri);
+        //        printf("Host: %s\n", httpHeader->host);
+        //        printf("Content-Type: %s\n", httpHeader->content_type);
+        //        printf("Content-Length: %s\n", httpHeader->content_length);
         dump(http_data, http_data_len);
     }
 }
@@ -66,16 +80,29 @@ void printInfoHTTP(uint16_t source_port, struct tcphdr *tcp_header) {
 void printInfoDNS(uint16_t source_port, uint16_t destination_port) {
     if (source_port == DNS_PORT || destination_port == DNS_PORT) {
         const uint8_t *dns_data =
-                (const uint8_t *) data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) + sizeof(struct udphdr);
-        uint dns_data_length = total_len - sizeof(struct ethhdr) - sizeof(struct iphdr) - sizeof(struct udphdr);
+                (const uint8_t *) (data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) + sizeof(struct udphdr));
         uint16_t flags = ntohs(*(uint16_t *) dns_data);
+
+        // Разбор DNS заголовка
+        dns_header *dnsHeader = (dns_header *) dns_data;
+        dnsHeader->id = ntohs(dnsHeader->id);
+        dnsHeader->flags = ntohs(dnsHeader->flags);
+        dnsHeader->qdcount = ntohs(dnsHeader->qdcount);
+        dnsHeader->ancount = ntohs(dnsHeader->ancount);
+        dnsHeader->nscount = ntohs(dnsHeader->nscount);
+        dnsHeader->arcount = ntohs(dnsHeader->arcount);
+
         if ((flags & 0x8000) == 0) {
-            printf("DNS Request:");
-            dump(dns_data, dns_data_length);
+            printf("DNS Request:\n");
         } else {
-            printf("DNS Response:");
-            dump(dns_data, dns_data_length);
+            printf("DNS Response:\n");
         }
+        printf("ID: %u\n", dnsHeader->id);
+        printf("Flags: 0x%04X\n", dnsHeader->flags);
+        printf("Questions: %u\n", dnsHeader->qdcount);
+        printf("Answers: %u\n", dnsHeader->ancount);
+        printf("Authority Records: %u\n", dnsHeader->nscount);
+        printf("Additional Records: %u\n", dnsHeader->arcount);
     }
 }
 
@@ -152,7 +179,7 @@ void process_packet(char **argv) {
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        printf("Usage: sudo ./program <protocol>\n");
+        printf("Usage: sudo ./program <protocol>(TCP/UDP/ICMP/ALL)\n");
         return 0;
     }
     if (strcmp(argv[1], "TCP") != 0 && strcmp(argv[1], "UDP") != 0 && strcmp(argv[1], "ICMP") != 0 &&
