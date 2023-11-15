@@ -18,12 +18,6 @@
 #define DNS_PORT 53
 #define BUF_SIZE 65536
 
-int Socket(int domain, int type, int protocol);
-
-int Recv(int sockfd, void *buf, size_t len, int flags);
-
-void Die(int result, const char *message);
-
 void printInfoTCP(const char *source_ip, const char *destination_ip);
 
 void printInfoUDP(const char *source_ip, const char *destination_ip);
@@ -34,9 +28,9 @@ void process_packet(char **argv);
 
 void dump(const uint8_t *data_buffer, uint data_len);
 
-void printInfoHTTP(uint16_t source_port, uint16_t destination_port, struct tcphdr *tcp_header);
+void printInfoHTTP(uint16_t source_port, struct tcphdr *tcp_header);
 
-void printInfoDNS(uint16_t source_port, uint16_t destination_port, struct udphdr *udp_header);
+void printInfoDNS(uint16_t source_port, uint16_t destination_port);
 
 int total_len = 0;
 uint8_t data_buffer[BUF_SIZE];
@@ -60,7 +54,7 @@ void dump(const uint8_t *data_buffer, uint data_len) {
     }
 }
 
-void printInfoHTTP(uint16_t source_port, uint16_t destination_port, struct tcphdr *tcp_header) {
+void printInfoHTTP(uint16_t source_port, struct tcphdr *tcp_header) {
     if (source_port == HTTP_PORT) {
         const uint8_t *http_data =
                 (const uint8_t *) data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) + (tcp_header->doff * 4);
@@ -70,7 +64,7 @@ void printInfoHTTP(uint16_t source_port, uint16_t destination_port, struct tcphd
     }
 }
 
-void printInfoDNS(uint16_t source_port, uint16_t destination_port, struct udphdr *udp_header) {
+void printInfoDNS(uint16_t source_port, uint16_t destination_port) {
     if (source_port == DNS_PORT || destination_port == DNS_PORT) {
         const uint8_t *dns_data =
                 (const uint8_t *) data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) + sizeof(struct udphdr);
@@ -91,7 +85,7 @@ void printInfoTCP(const char *source_ip, const char *destination_ip) {
     uint16_t source_port = ntohs(tcp_header->source);
     uint16_t destination_port = ntohs(tcp_header->dest);
     printf("TCP, %s.%u > %s.%u\n", source_ip, source_port, destination_ip, destination_port);
-    printInfoHTTP(source_port, destination_port, tcp_header);
+    printInfoHTTP(source_port, tcp_header);
 }
 
 void printInfoUDP(const char *source_ip, const char *destination_ip) {
@@ -99,7 +93,7 @@ void printInfoUDP(const char *source_ip, const char *destination_ip) {
     uint16_t source_port = ntohs(udp_header->source);
     uint16_t destination_port = ntohs(udp_header->dest);
     printf("UDP, %s.%u > %s.%u\n", source_ip, source_port, destination_ip, destination_port);
-    printInfoDNS(source_port, destination_port, udp_header);
+    printInfoDNS(source_port, destination_port);
 }
 
 void printInfoICMP(const char *source_ip, const char *destination_ip) {
@@ -127,10 +121,10 @@ void process_packet(char **argv) {
     char date_string[64];
     strftime(date_string, sizeof(date_string), "%Y-%m-%d", local_time);
 
-    if (strcmp(argv[1], "TCP") == 0 && protocol == IPPROTO_TCP ||
-        strcmp(argv[1], "UDP") == 0 && protocol == IPPROTO_UDP ||
-        strcmp(argv[1], "ICMP") == 0 && protocol == IPPROTO_ICMP ||
-        strcmp(argv[1], "ALL") == 0) {
+    if ((strcmp(argv[1], "TCP") == 0 && protocol == IPPROTO_TCP) ||
+        (strcmp(argv[1], "UDP") == 0 && protocol == IPPROTO_UDP) ||
+        (strcmp(argv[1], "ICMP") == 0 && protocol == IPPROTO_ICMP) ||
+        (strcmp(argv[1], "ALL") == 0)) {
         printf("Packet info (len: %u): %s, IPv%d, ttl %d, ", total_len, date_string, version, ttl);
     }
     if (strcmp(argv[1], "ALL") == 0) {
