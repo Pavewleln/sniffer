@@ -12,17 +12,14 @@
 #include <netinet/ip_icmp.h>
 #include <net/ethernet.h>
 #include "include/erproc.h"
-#include "include/help.h"
 
 #define HTTP_PORT 80
 #define DNS_PORT 53
 #define BUF_SIZE 65536
 
-void printInfoTCP(const char *source_ip, const char *destination_ip);
-
-void printInfoUDP(const char *source_ip, const char *destination_ip);
-
-void printInfoICMP(const char *source_ip, const char *destination_ip);
+int total_len = 0;
+uint8_t data_buffer[BUF_SIZE];
+struct iphdr *ip_header = NULL;
 
 void process_packet(char **argv);
 
@@ -32,9 +29,11 @@ void printInfoHTTP(uint16_t source_port, struct tcphdr *tcp_header);
 
 void printInfoDNS(uint16_t source_port, uint16_t destination_port);
 
-int total_len = 0;
-uint8_t data_buffer[BUF_SIZE];
-struct iphdr *ip_header = NULL;
+void printInfoTCP(const char *source_ip, const char *destination_ip);
+
+void printInfoUDP(const char *source_ip, const char *destination_ip);
+
+void printInfoICMP(const char *source_ip, const char *destination_ip);
 
 void dump(const uint8_t *data_buffer, uint data_len) {
     const char *http_data = (const char *) data_buffer;
