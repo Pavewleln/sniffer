@@ -1,6 +1,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -11,47 +12,17 @@
 #include <netinet/ip_icmp.h>
 #include <net/ethernet.h>
 #include "include/erproc.h"
+#include "include/http.h"
+#include "include/dns.h"
+#include "include/main.h"
 
 #define HTTP_PORT 80
 #define DNS_PORT 53
 #define BUF_SIZE 65536
 
-
-typedef struct {
-    uint16_t id;
-    uint16_t flags;
-    uint16_t qdcount;
-    uint16_t ancount;
-    uint16_t nscount;
-    uint16_t arcount;
-} dns_header;
-
-
-//typedef struct {
-//    char method[10];
-//    char uri[100];
-//    char host[100];
-//    char content_type[50];
-//    char content_length[20];
-//} http_header;
-
 uint total_len = 0;
-uint8_t data_buffer[BUF_SIZE];
+uint8_t *data_buffer = NULL;
 struct iphdr *ip_header = NULL;
-
-void process_packet(char **argv);
-
-void dump(const uint8_t *data_buffer, uint data_len);
-
-void printInfoHTTP(uint16_t source_port, struct tcphdr *tcp_header);
-
-void printInfoDNS(uint16_t source_port, uint16_t destination_port);
-
-void printInfoTCP(const char *source_ip, const char *destination_ip);
-
-void printInfoUDP(const char *source_ip, const char *destination_ip);
-
-void printInfoICMP(const char *source_ip, const char *destination_ip);
 
 void dump(const uint8_t *data_buffer, uint data_len) {
     for (uint i = 0; i < data_len; i++) {
@@ -60,30 +31,51 @@ void dump(const uint8_t *data_buffer, uint data_len) {
     printf("\n");
 }
 
-void printInfoHTTP(uint16_t source_port, struct tcphdr *tcp_header) {
-    if (source_port == HTTP_PORT) {
+void printHttpRequest(const uint8_t *http_data, uint http_data_len) {
+    printf("Received HTTP Request:\n");
+    HttpRequest *httpHeader = (HttpRequest *) http_data;
+
+    printf("HTTP Header:\n");
+    printf("Method: %s\n", httpHeader->method);
+    printf("URI: %s\n", httpHeader->uri);
+    printf("Host: %s\n", httpHeader->host);
+    printf("Content-Type: %s\n", httpHeader->content_type);
+    printf("Content-Length: %s\n", httpHeader->content_length);
+    dump(http_data + sizeof(HttpRequest), http_data_len);
+}
+
+void printHttpResponse(const uint8_t *http_data, uint http_data_len) {
+    printf("Received HTTP Response:\n");
+    HttpResponse *httpHeader = (HttpResponse *) http_data;
+
+    printf("HTTP Header:\n");
+    printf("Method: %d\n", httpHeader->status_code);
+    printf("URI: %s\n", httpHeader->status_text);
+    printf("Host: %s\n", httpHeader->content_length);
+    printf("Host: %s\n", httpHeader->content_type);
+    dump(http_data + sizeof(HttpResponse), http_data_len);
+}
+
+void printInfoHTTP(uint16_t source_port, uint16_t destination_port, struct tcphdr *tcp_header) {
+    if (source_port == HTTP_PORT || destination_port == HTTP_PORT) {
         const uint8_t *http_data =
                 (const uint8_t *) (data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) + (tcp_header->doff * 4));
-        uint http_data_len = total_len - sizeof(struct ethhdr) - (ip_header->ihl * 4) + (tcp_header->doff * 4);
-        //        http_header *httpHeader = (http_header *) http_data;
-        //
-        //        printf("HTTP Header:\n");
-        //        printf("Method: %s\n", httpHeader->method);
-        //        printf("URI: %s\n", httpHeader->uri);
-        //        printf("Host: %s\n", httpHeader->host);
-        //        printf("Content-Type: %s\n", httpHeader->content_type);
-        //        printf("Content-Length: %s\n", httpHeader->content_length);
-        dump(http_data, http_data_len);
+        uint http_data_len = total_len - sizeof(struct ethhdr) - (ip_header->ihl * 4) - (tcp_header->doff * 4);
+        if (http_data_len <= 0) return;
+        if (tcp_header->syn && !tcp_header->ack) {
+            printHttpRequest(http_data, http_data_len);
+        } else {
+            printHttpResponse(http_data, http_data_len);
+        }
     }
 }
 
 void printInfoDNS(uint16_t source_port, uint16_t destination_port) {
     if (source_port == DNS_PORT || destination_port == DNS_PORT) {
-        const uint8_t *dns_data =
-                (const uint8_t *) (data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) + sizeof(struct udphdr));
+        const uint8_t *dns_data = (const uint8_t *) (data_buffer + sizeof(struct ethhdr) + (ip_header->ihl * 4) +
+                                                     sizeof(struct udphdr));
         uint16_t flags = ntohs(*(uint16_t *) dns_data);
 
-        // Разбор DNS заголовка
         dns_header *dnsHeader = (dns_header *) dns_data;
         dnsHeader->id = ntohs(dnsHeader->id);
         dnsHeader->flags = ntohs(dnsHeader->flags);
@@ -97,12 +89,108 @@ void printInfoDNS(uint16_t source_port, uint16_t destination_port) {
         } else {
             printf("DNS Response:\n");
         }
+        printf("==header==\n");
         printf("ID: %u\n", dnsHeader->id);
         printf("Flags: 0x%04X\n", dnsHeader->flags);
         printf("Questions: %u\n", dnsHeader->qdcount);
         printf("Answers: %u\n", dnsHeader->ancount);
         printf("Authority Records: %u\n", dnsHeader->nscount);
         printf("Additional Records: %u\n", dnsHeader->arcount);
+        printf("-----------------\n");
+        if (dnsHeader->qdcount > 0) {
+            printf("==question==\n");
+            const uint8_t *question_data = dns_data + sizeof(dns_header);
+
+            for (int i = 0; i < dnsHeader->qdcount; i++) {
+                dns_question *question = (dns_question *) question_data;
+
+                question->qtype = ntohs(question->qtype);
+                question->qclass = ntohs(question->qclass);
+
+                printf("Domain: %s\n", question_data + sizeof(dns_question));
+                printf("Type: %u\n", question->qtype);
+                printf("Class: %u\n", question->qclass);
+
+                question_data += sizeof(dns_question) + strlen((const char *) question_data + sizeof(dns_question)) + 1;
+                printf("-----------------\n");
+            }
+        }
+        if (dnsHeader->ancount > 0) {
+            printf("==answers==\n");
+
+            const uint8_t *answer_data =
+                    dns_data + sizeof(dns_header) + dnsHeader->qdcount * (sizeof(dns_question) + 1);
+
+            for (int i = 0; i < dnsHeader->ancount; i++) {
+                dns_answer *answer = (dns_answer *) answer_data;
+
+                answer->type = ntohs(answer->type);
+                answer->class = ntohs(answer->class);
+                answer->ttl = ntohl(answer->ttl);
+                answer->data_length = ntohs(answer->data_length);
+
+                printf("Name: %s\n", answer_data + sizeof(dns_answer));
+                printf("Type: %u\n", answer->type);
+                printf("Class: %u\n", answer->class);
+                printf("TTL: %u\n", answer->ttl);
+                printf("Data Length: %u\n", answer->data_length);
+
+                answer_data += sizeof(dns_answer) + answer->data_length;
+                printf("-----------------\n");
+            }
+        }
+        if (dnsHeader->nscount > 0) {
+            printf("==authority records==\n");
+
+            const uint8_t *authority_data =
+                    dns_data + sizeof(dns_header) + dnsHeader->qdcount * (sizeof(dns_question) + 1) +
+                    dnsHeader->ancount * (sizeof(dns_answer) + 1);
+
+            for (int i = 0; i < dnsHeader->nscount; i++) {
+                dns_authority *authority = (dns_authority *) authority_data;
+
+                authority->type = ntohs(authority->type);
+                authority->class = ntohs(authority->class);
+                authority->ttl = ntohl(authority->ttl);
+                authority->data_length = ntohs(authority->data_length);
+
+                printf("Name: %s\n", authority_data + sizeof(dns_authority));
+                printf("Type: %u\n", authority->type);
+                printf("Class: %u\n", authority->class);
+                printf("TTL: %u\n", authority->ttl);
+                printf("Data Length: %u\n", authority->data_length);
+
+                authority_data += sizeof(dns_authority) + authority->data_length;
+            }
+            printf("-----------------\n");
+        }
+        if (dnsHeader->arcount > 0) {
+            printf("==additional records==\n");
+
+            const uint8_t *additional_data =
+                    dns_data + sizeof(dns_header) + dnsHeader->qdcount * (sizeof(dns_question) + 1) +
+                    dnsHeader->ancount * (sizeof(dns_answer) + 1) +
+                    dnsHeader->nscount * (sizeof(dns_authority) + 1);
+
+            for (int i = 0; i < dnsHeader->arcount; i++) {
+                dns_additional *additional = (dns_additional *) additional_data;
+
+                additional->type = ntohs(additional->type);
+                additional->class = ntohs(additional->class);
+                additional->ttl = ntohl(additional->ttl);
+                additional->data_length = ntohs(additional->data_length);
+
+                printf("Name: %s\n", additional_data + sizeof(dns_additional));
+                printf("Type: %u\n", additional->type);
+                printf("Class: %u\n", additional->class);
+                printf("TTL: %u\n", additional->ttl);
+                printf("Data Length: %u\n", additional->data_length);
+
+                additional_data += sizeof(dns_additional) + additional->data_length;
+            }
+            printf("-----------------\n");
+        }
+        printf("\n");
     }
 }
 
@@ -111,7 +199,7 @@ void printInfoTCP(const char *source_ip, const char *destination_ip) {
     uint16_t source_port = ntohs(tcp_header->source);
     uint16_t destination_port = ntohs(tcp_header->dest);
     printf("TCP, %s.%u > %s.%u\n", source_ip, source_port, destination_ip, destination_port);
-    printInfoHTTP(source_port, tcp_header);
+    printInfoHTTP(source_port, destination_port, tcp_header);
 }
 
 void printInfoUDP(const char *source_ip, const char *destination_ip) {
@@ -189,6 +277,7 @@ int main(int argc, char **argv) {
     }
     int fd;
     fd = Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    data_buffer = (unsigned char *) malloc(65536);
     while (1) {
         total_len = Recv(fd, data_buffer, BUF_SIZE, 0);
         struct ethhdr *eth_header = (struct ethhdr *) data_buffer;
