@@ -12,9 +12,9 @@
 #include <netinet/ip_icmp.h>
 #include <net/ethernet.h>
 #include "include/erproc.h"
-#include "include/http.h"
 #include "include/dns.h"
 #include "include/main.h"
+#include "include/http_output.h"
 
 #define HTTP_PORT 80
 #define DNS_PORT 53
@@ -23,38 +23,6 @@
 uint total_len = 0;
 uint8_t *data_buffer = NULL;
 struct iphdr *ip_header = NULL;
-
-void dump(const uint8_t *data_buffer, uint data_len) {
-    for (uint i = 0; i < data_len; i++) {
-        printf("%c", data_buffer[i]);
-    }
-    printf("\n");
-}
-
-void printHttpRequest(const uint8_t *http_data, uint http_data_len) {
-    printf("Received HTTP Request:\n");
-    HttpRequest *httpHeader = (HttpRequest *) http_data;
-
-    printf("HTTP Header:\n");
-    printf("Method: %s\n", httpHeader->method);
-    printf("URI: %s\n", httpHeader->uri);
-    printf("Host: %s\n", httpHeader->host);
-    printf("Content-Type: %s\n", httpHeader->content_type);
-    printf("Content-Length: %s\n", httpHeader->content_length);
-    dump(http_data + sizeof(HttpRequest), http_data_len);
-}
-
-void printHttpResponse(const uint8_t *http_data, uint http_data_len) {
-    printf("Received HTTP Response:\n");
-    HttpResponse *httpHeader = (HttpResponse *) http_data;
-
-    printf("HTTP Header:\n");
-    printf("Method: %d\n", httpHeader->status_code);
-    printf("URI: %s\n", httpHeader->status_text);
-    printf("Host: %s\n", httpHeader->content_length);
-    printf("Host: %s\n", httpHeader->content_type);
-    dump(http_data + sizeof(HttpResponse), http_data_len);
-}
 
 void printInfoHTTP(uint16_t source_port, uint16_t destination_port, struct tcphdr *tcp_header) {
     if (source_port == HTTP_PORT || destination_port == HTTP_PORT) {

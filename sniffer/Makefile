@@ -6,7 +6,7 @@ CFLAGS = -Wall -Wextra
 
 RM = rm -rf
 
-SRCS = main.c erproc.c
+SRCS = main.c erproc.c http_output.c utils.c
 
 OBJS = $(SRCS:.c=.o)
 

@@ -1,5 +1,5 @@
-#ifndef HTTP_H
-#define HTTP_H
+#ifndef HTTP_OUTPUT_H
+#define HTTP_OUTPUT_H
 // Структура для представления HTTP-запроса
 typedef struct {
     int8_t method[16];          // Метод запроса (например, "GET", "POST", "PUT")
@@ -16,4 +16,9 @@ typedef struct {
     int8_t content_type[64];    // Значение заголовка "Content-Type"
     int8_t content_length[16];  // Значение заголовка "Content-Length"
 } HttpResponse;
+
+void printHttpRequest(const uint8_t *http_data, uint http_data_len);
+
+void printHttpResponse(const uint8_t *http_data, uint http_data_len);
+
 #endif
