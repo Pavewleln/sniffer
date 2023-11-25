@@ -19,7 +19,7 @@ typedef struct {
     uint16_t type;
     uint16_t class;
     uint32_t ttl;
-    uint16_t data_length;
+    uint16_t dataLength;
     // Add additional fields as needed for different record types
 } dns_answer;
 
@@ -27,7 +27,7 @@ typedef struct {
     uint16_t type;
     uint16_t class;
     uint32_t ttl;
-    uint16_t data_length;
+    uint16_t dataLength;
     // Add additional fields as needed for different record types
 } dns_authority;
 
@@ -35,7 +35,7 @@ typedef struct {
     uint16_t type;
     uint16_t class;
     uint32_t ttl;
-    uint16_t data_length;
+    uint16_t dataLength;
     // Add additional fields as needed for different record types
 } dns_additional;
 #endif
