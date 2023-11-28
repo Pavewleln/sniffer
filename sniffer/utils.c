@@ -6,10 +6,10 @@
 #include <netinet/in.h>
 #include "include/utils.h"
 
-void GetCurrentDate(char *dateString, size_t maxLength) {
+void GetCurrentDate(char *dateString, size_t maxdata_len) {
     time_t currentTime = time(NULL);
     struct tm *localTime = localtime(&currentTime);
-    strftime(dateString, maxLength, "%Y-%m-%d", localTime);
+    strftime(dateString, maxdata_len, "%Y-%m-%d", localTime);
 }
 
 void GetTypeArgv(int *protocolFlag, char **argv, int argc) {
@@ -31,9 +31,30 @@ void GetTypeArgv(int *protocolFlag, char **argv, int argc) {
 
 void Dump(const uint8_t *data, uint data_len) {
     for (uint i = 0; i < data_len; i++) {
-        printf("%c", data[i]);
+        uint byte = data[i];
+        if ((i % 16) == 0) {
+            printf("%04x ", i);
+        }
+        printf("%02x ", byte);
+        if(i == 8){
+            printf(" ");
+        }
+        if (((i % 16) == 15) || (i == data_len - 1)) {
+            for (uint j = 0; j < 15 - (i % 16); j++) {
+                printf(" ");
+            }
+            printf("| ");
+            for (uint j = i - (i % 16); j <= i; j++) {
+                byte = data[j];
+                if ((byte > 31) && byte < 127) {
+                    printf("%c", byte);
+                } else {
+                    printf(".");
+                }
+            }
+            printf("\n");
+        }
     }
-    printf("\n");
 }
 
 void IsError(int result, const char *errorMessage) {

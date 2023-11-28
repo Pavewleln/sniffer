@@ -2,7 +2,7 @@ TARGET = sniffer
 CC = gcc
 CFLAGS = -Wall -Wextra
 RM = rm -rf
-SRCS = main.c erproc.c httpOutput.c utils.c transportLayer.c applicationLayer.c
+SRCS = main.c erproc.c utils.c transportLayer.c applicationLayer.c
 BUILD_DIR = build
 OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCS))
 

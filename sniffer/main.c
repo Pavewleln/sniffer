@@ -12,14 +12,13 @@
 
 #define BUF_SIZE 65536
 
-void ProcessPacket(uint8_t *dataBuffer);
+void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength);
 
-void ProcessPacket(uint8_t *dataBuffer) {
+void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
     // IP info
     struct iphdr *ipHeader = (struct iphdr *) (dataBuffer + sizeof(struct ethhdr));
     uint version = ipHeader->version;
     uint8_t protocol = ipHeader->protocol;
-    uint16_t totalLen = ntohs(ipHeader->tot_len);
     uint8_t ttl = ipHeader->ttl;
     char sourceIp[INET_ADDRSTRLEN];
     char destinationIp[INET_ADDRSTRLEN];
@@ -28,11 +27,11 @@ void ProcessPacket(uint8_t *dataBuffer) {
 
     char dateString[64];
     GetCurrentDate(dateString, sizeof(dateString));
-    printf("Packet info (len: %u): %s, IPv%d, ttl %d, ", totalLen, dateString, version, ttl);
+    printf("Packet info (len: %ld): %s, IPv%d, ttl %d, ", dataLength, dateString, version, ttl);
 
     switch (protocol) {
         case IPPROTO_TCP:
-            PrintInfoTCP(sourceIp, destinationIp, ipHeader, dataBuffer, totalLen);
+            PrintInfoTCP(sourceIp, destinationIp, ipHeader, dataBuffer, dataLength);
             break;
         case IPPROTO_UDP:
             PrintInfoUDP(sourceIp, destinationIp, ipHeader, dataBuffer);
@@ -53,18 +52,21 @@ int main(int argc, char **argv) {
     int fd = Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP));
 
     uint8_t *dataBuffer = (uint8_t *) malloc(BUF_SIZE);
-    IsNull(dataBuffer, "dataBuffer is null");
+    IsNull(dataBuffer, "Failed to allocate memory for data buffer");
     while (1) {
-        Recv(fd, dataBuffer, BUF_SIZE, 0);
+        ssize_t dataLength = Recv(fd, dataBuffer, BUF_SIZE, 0);
+        if (dataLength < (ssize_t)(sizeof(struct ethhdr) + sizeof(struct iphdr))) {
+            continue;
+        }
         struct iphdr *ipHeader = (struct iphdr *) (dataBuffer + sizeof(struct ethhdr));
         uint8_t protocol = ipHeader->protocol;
 
         if (protocolFlag == -1 || protocol == protocolFlag) {
-            ProcessPacket(dataBuffer);
+            ProcessPacket(dataBuffer, dataLength);
         }
     }
-//    close(fd);
-//    free(dataBuffer);
-//
-//    return 0;
+    close(fd);
+    free(dataBuffer);
+
+    return EXIT_SUCCESS;
 }

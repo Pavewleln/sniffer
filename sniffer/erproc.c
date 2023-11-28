@@ -8,7 +8,8 @@ int Socket(int domain, int type, int protocol) {
     return socketResult;
 }
 
-void Recv(int sockfd, void *buf, size_t len, int flags) {
+ssize_t Recv(int sockfd, void *buf, size_t len, int flags) {
     ssize_t recvResult = recv(sockfd, buf, len, flags);
     IsError( recvResult, "recv failed\n");
+    return recvResult;
 }

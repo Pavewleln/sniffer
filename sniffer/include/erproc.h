@@ -3,6 +3,6 @@
 
 int Socket(int domain, int type, int protocol);
 
-void Recv(int sockfd, void *buf, size_t len, int flags);
+ssize_t Recv(int sockfd, void *buf, size_t len, int flags);
 
 #endif

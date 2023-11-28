@@ -8,12 +8,12 @@ typedef struct {
     uint16_t ancount;
     uint16_t nscount;
     uint16_t arcount;
-} dns_header;
+} dnsHeader;
 
 typedef struct {
     uint16_t qtype;
     uint16_t qclass;
-} dns_question;
+} dnsQuestion;
 
 typedef struct {
     uint16_t type;
@@ -21,7 +21,7 @@ typedef struct {
     uint32_t ttl;
     uint16_t dataLength;
     // Add additional fields as needed for different record types
-} dns_answer;
+} dnsAnswer;
 
 typedef struct {
     uint16_t type;
@@ -29,7 +29,7 @@ typedef struct {
     uint32_t ttl;
     uint16_t dataLength;
     // Add additional fields as needed for different record types
-} dns_authority;
+} dnsAuthority;
 
 typedef struct {
     uint16_t type;
@@ -37,5 +37,5 @@ typedef struct {
     uint32_t ttl;
     uint16_t dataLength;
     // Add additional fields as needed for different record types
-} dns_additional;
+} dnsAdditional;
 #endif

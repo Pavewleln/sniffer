@@ -9,11 +9,12 @@
 #include "include/applicationLayer.h"
 
 void PrintInfoTCP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer,
-                  uint16_t totalLen) {
+                  uint16_t dataLength) {
     struct tcphdr *tcpHeader = (struct tcphdr *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4));
     uint16_t sourcePort = ntohs(tcpHeader->source);
     uint16_t destinationPort = ntohs(tcpHeader->dest);
     printf("TCP, %s.%u > %s.%u\n", sourceIp, sourcePort, destinationIp, destinationPort);
+    PrintInfoHTTP(sourcePort, destinationPort, tcpHeader, ipHeader, dataBuffer, dataLength);
 }
 
 void PrintInfoUDP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer) {
