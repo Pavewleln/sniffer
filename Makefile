@@ -11,7 +11,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $@
 
-$(BUILD_DIR)/%.o: %.c include/*.h | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.c include | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR):
