@@ -47,12 +47,8 @@ void ProcessPacket(uint8_t *dataBuffer) {
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
-        printf("Usage: sudo ./program <protocol>(TCP/UDP/ICMP/ALL)\n");
-        return 0;
-    }
     int protocolFlag = -1;
-    GetTypeArgv(&protocolFlag, argv);
+    GetTypeArgv(&protocolFlag, argv, argc);
 
     int fd = Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP));
 

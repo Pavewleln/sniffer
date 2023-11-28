@@ -12,7 +12,11 @@ void GetCurrentDate(char *dateString, size_t maxLength) {
     strftime(dateString, maxLength, "%Y-%m-%d", localTime);
 }
 
-void GetTypeArgv(int *protocolFlag, char **argv) {
+void GetTypeArgv(int *protocolFlag, char **argv, int argc) {
+    if (argc < 2) {
+        printf("Usage: sudo ./program <protocol>(TCP/UDP/ICMP/ALL)\n");
+        return;
+    }
     if (strcmp(argv[1], "TCP") == 0) {
         *protocolFlag = IPPROTO_TCP;
     } else if (strcmp(argv[1], "UDP") == 0) {

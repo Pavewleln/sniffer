@@ -3,7 +3,7 @@
 
 void GetCurrentDate(char *date_string, size_t max_length);
 
-void GetTypeArgv(int *protocolFlag, char** argv);
+void GetTypeArgv(int *protocolFlag, char** argv, int argc);
 
 void Dump(const unsigned char *data, uint data_len);
 

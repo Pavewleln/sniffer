@@ -1,22 +1,21 @@
 TARGET = sniffer
-
 CC = gcc
-
 CFLAGS = -Wall -Wextra
-
 RM = rm -rf
-
 SRCS = main.c erproc.c httpOutput.c utils.c transportLayer.c applicationLayer.c
-
-OBJS = $(SRCS:.c=.o)
+BUILD_DIR = build
+OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCS))
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $@
 
-%.o: %.c include/*.h
+$(BUILD_DIR)/%.o: %.c include/*.h | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
 clean:
-	$(RM) $(OBJS) $(TARGET)
+	$(RM) $(BUILD_DIR) $(TARGET)
