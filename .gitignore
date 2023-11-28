@@ -1,6 +1,6 @@
-/build
+/sniffer/build
 /cmake-build-debug
-sniffer
+/sniffer/sniffer
 
 .vscode
 .idea
