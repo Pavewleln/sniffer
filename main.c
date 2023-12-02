@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,9 +11,8 @@
 
 #define BUF_SIZE 65536
 
-void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength);
-
-void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
+static void
+ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
     // IP info
     struct iphdr *ipHeader = (struct iphdr *) (dataBuffer + sizeof(struct ethhdr));
     uint version = ipHeader->version;
@@ -34,7 +32,7 @@ void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
             PrintInfoTCP(sourceIp, destinationIp, ipHeader, dataBuffer, dataLength);
             break;
         case IPPROTO_UDP:
-            PrintInfoUDP(sourceIp, destinationIp, ipHeader, dataBuffer);
+            PrintInfoUDP(sourceIp, destinationIp, ipHeader, dataBuffer, dataLength);
             break;
         case IPPROTO_ICMP:
             PrintInfoICMP(sourceIp, destinationIp, ipHeader, dataBuffer);
@@ -45,28 +43,21 @@ void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
     }
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv) {
     int protocolFlag = -1;
     GetTypeArgv(&protocolFlag, argv, argc);
 
     int fd = Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP));
 
-    uint8_t *dataBuffer = (uint8_t *) malloc(BUF_SIZE);
+    uint8_t dataBuffer[BUF_SIZE];
     IsNull(dataBuffer, "Failed to allocate memory for data buffer");
     while (1) {
         ssize_t dataLength = Recv(fd, dataBuffer, BUF_SIZE, 0);
-        if (dataLength < (ssize_t)(sizeof(struct ethhdr) + sizeof(struct iphdr))) {
-            continue;
-        }
+        if (dataLength <= (ssize_t)(sizeof(struct ethhdr) + sizeof(struct iphdr))) continue;
         struct iphdr *ipHeader = (struct iphdr *) (dataBuffer + sizeof(struct ethhdr));
         uint8_t protocol = ipHeader->protocol;
 
-        if (protocolFlag == -1 || protocol == protocolFlag) {
-            ProcessPacket(dataBuffer, dataLength);
-        }
+        if (protocolFlag == -1 || protocol == protocolFlag) ProcessPacket(dataBuffer, dataLength);
     }
-    close(fd);
-    free(dataBuffer);
-
-    return EXIT_SUCCESS;
 }

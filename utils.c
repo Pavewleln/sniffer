@@ -1,18 +1,19 @@
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <netinet/in.h>
 #include "include/utils.h"
 
-void GetCurrentDate(char *dateString, size_t maxdata_len) {
+void
+GetCurrentDate(char *dateString, size_t dataLength) {
     time_t currentTime = time(NULL);
     struct tm *localTime = localtime(&currentTime);
-    strftime(dateString, maxdata_len, "%Y-%m-%d", localTime);
+    strftime(dateString, dataLength, "%Y-%m-%d", localTime);
 }
 
-void GetTypeArgv(int *protocolFlag, char **argv, int argc) {
+void
+GetTypeArgv(int *protocolFlag, char **argv, int argc) {
     if (argc < 2) {
         printf("Usage: sudo ./program <protocol>(TCP/UDP/ICMP/ALL)\n");
         return;
@@ -29,17 +30,15 @@ void GetTypeArgv(int *protocolFlag, char **argv, int argc) {
     }
 }
 
-void Dump(const uint8_t *data, uint data_len) {
-    for (uint i = 0; i < data_len; i++) {
+void
+Dump(const uint8_t *data, const uint dataLength) {
+    for (uint i = 0; i < dataLength; i++) {
         uint byte = data[i];
         if ((i % 16) == 0) {
-            printf("%04x ", i);
+            printf("%04x  ", i);
         }
         printf("%02x ", byte);
-        if(i == 8){
-            printf(" ");
-        }
-        if (((i % 16) == 15) || (i == data_len - 1)) {
+        if (((i % 16) == 15) || (i == dataLength - 1)) {
             for (uint j = 0; j < 15 - (i % 16); j++) {
                 printf(" ");
             }
@@ -57,14 +56,16 @@ void Dump(const uint8_t *data, uint data_len) {
     }
 }
 
-void IsError(int result, const char *errorMessage) {
+void
+IsError(int result, const char *errorMessage) {
     if (result == -1) {
         perror(errorMessage);
         exit(EXIT_FAILURE);
     }
 }
 
-void IsNull(void *result, const char *errorMessage) {
+void
+IsNull(void *result, const char *errorMessage) {
     if (result == NULL) {
         perror(errorMessage);
         exit(EXIT_FAILURE);

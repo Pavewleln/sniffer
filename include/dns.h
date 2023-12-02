@@ -15,27 +15,4 @@ typedef struct {
     uint16_t qclass;
 } dnsQuestion;
 
-typedef struct {
-    uint16_t type;
-    uint16_t class;
-    uint32_t ttl;
-    uint16_t dataLength;
-    // Add additional fields as needed for different record types
-} dnsAnswer;
-
-typedef struct {
-    uint16_t type;
-    uint16_t class;
-    uint32_t ttl;
-    uint16_t dataLength;
-    // Add additional fields as needed for different record types
-} dnsAuthority;
-
-typedef struct {
-    uint16_t type;
-    uint16_t class;
-    uint32_t ttl;
-    uint16_t dataLength;
-    // Add additional fields as needed for different record types
-} dnsAdditional;
 #endif
