@@ -51,7 +51,8 @@ PrintInfoHTTP(const uint16_t sourcePort, const uint16_t destinationPort, struct 
                                                  (tcpHeader->doff * 4));
     const uint httpDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - (tcpHeader->doff * 4);
 
-    if (IsHTTPPacket(httpData, dataLength)) Dump(httpData, httpDataLength);
+//    if (IsHTTPPacket(httpData, dataLength))
+        Dump(httpData, httpDataLength);
 
     // If is not response and is not request, this is not http packet
     return;
@@ -64,12 +65,13 @@ PrintInfoDNS(const uint16_t sourcePort, const uint16_t destinationPort, struct i
 
     const uint8_t *dnsData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                 transportHdr);
-    const uint dnsDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - transportHdr;
 
     dnsHeader *header = (dnsHeader *) dnsData;
 
     // If qdcount is 0, then the packet is not a valid DNS packet.
     if (ntohs(header->qdcount) <= 0) return;
+
+    const uint dnsDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - transportHdr;
 
     uint16_t flags = ntohs(*(uint16_t *) dnsData);
     if ((flags & DNS_FLAG_RESPONSE) == 0) {
@@ -90,47 +92,45 @@ PrintInfoDNS(const uint16_t sourcePort, const uint16_t destinationPort, struct i
     printf("Answer RRs: %u\n", header->ancount);
     printf("Authority RRs: %u\n", header->nscount);
     printf("Additional RRs: %u\n", header->arcount);
-    if (header->qdcount > 0) {
-        const uint8_t *questionData = dnsData + sizeof(dnsHeader);
+    const uint8_t *questionData = dnsData + sizeof(dnsHeader);
 
-        char name[256];
-        int nameIndex = 0;
-        int isCompressed = 0;
-        int offset = 0;
+    char name[256];
+    int nameIndex = 0;
+    int isCompressed = 0;
+    int offset = 0;
 
-        for (int i = 0; i < header->qdcount; i++) {
-            // Variables for reading labels
-            int labelLength = 0;
-            const uint8_t *labelData = questionData + offset;
+    for (int i = 0; i < header->qdcount; i++) {
+        // Variables for reading labels
+        int labelLength = 0;
+        const uint8_t *labelData = questionData + offset;
 
-            // Checking for name compression
-            if ((labelData[0] & 0xC0) == 0xC0) {
-                // Compressed name
-                isCompressed = 1;
-                offset += 2;
-                continue;
-            }
-
-            // Reading each label
-            while (labelData[labelLength] != 0) {
-                if (labelLength > 0) {
-                    name[nameIndex++] = '.';
-                }
-                int len = labelData[labelLength++];
-                for (int j = 0; j < len; j++) {
-                    name[nameIndex++] = labelData[labelLength++];
-                }
-            }
-
-            if (!isCompressed) {
-                offset += labelLength + 1;
-            }
-
-            dnsQuestion *question = (dnsQuestion *) (questionData + offset);
-            question->qtype = ntohs(question->qtype);
-            question->qclass = ntohs(question->qclass);
-            printf("Name: %s, type: %u, class: %u\n", name, question->qtype, question->qclass);
+        // Checking for name compression
+        if ((labelData[0] & 0xC0) == 0xC0) {
+            // Compressed name
+            isCompressed = 1;
+            offset += 2;
+            continue;
         }
+
+        // Reading each label
+        while (labelData[labelLength] != 0) {
+            if (labelLength > 0) {
+                name[nameIndex++] = '.';
+            }
+            int len = labelData[labelLength++];
+            for (int j = 0; j < len; j++) {
+                name[nameIndex++] = labelData[labelLength++];
+            }
+        }
+
+        if (!isCompressed) {
+            offset += labelLength + 1;
+        }
+
+        dnsQuestion *question = (dnsQuestion *) (questionData + offset);
+        question->qtype = ntohs(question->qtype);
+        question->qclass = ntohs(question->qclass);
+        printf("Name: %s, type: %u, class: %u\n", name, question->qtype, question->qclass);
     }
 
     Dump(dnsData, dnsDataLength);
