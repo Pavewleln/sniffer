@@ -8,18 +8,7 @@
 #include "include/utils.h"
 #include "include/applicationLayer.h"
 
-#define HTTP_PORT 80
-
-#define DNS_PORT 53
 #define DNS_FLAG_RESPONSE 0x8000
-
-static int IsHTTPPort(const uint16_t sourcePort, const uint16_t destinationPort) {
-    return (sourcePort == HTTP_PORT || destinationPort == HTTP_PORT);
-}
-
-static int IsDNSPort(const uint16_t sourcePort, const uint16_t destinationPort) {
-    return (sourcePort == DNS_PORT || destinationPort == DNS_PORT);
-}
 
 static int IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
     if (tcpPayloadLen < 4) return 0;
@@ -38,10 +27,7 @@ static int IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
     return 0;
 }
 
-void PrintInfoHTTP(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
-                   struct tcphdr *tcpHeader, uint8_t *dataBuffer,
-                   const uint dataLength) {
-    if (!IsHTTPPort(sourcePort, destinationPort)) return;
+void PrintInfoHTTP(struct iphdr *ipHeader, struct tcphdr *tcpHeader, uint8_t *dataBuffer, const uint dataLength) {
 
     const uint8_t *httpData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                  (tcpHeader->doff * 4));
@@ -53,9 +39,7 @@ void PrintInfoHTTP(const uint16_t sourcePort, const uint16_t destinationPort, st
     return;
 }
 
-void PrintInfoDNS(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
-                  uint8_t *dataBuffer, const uint dataLength, size_t transportHdr) {
-    if (!IsDNSPort(sourcePort, destinationPort)) return;
+void PrintInfoDNS(struct iphdr *ipHeader, uint8_t *dataBuffer, const uint dataLength, size_t transportHdr) {
 
     const uint8_t *dnsData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                 transportHdr);
