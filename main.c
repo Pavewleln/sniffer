@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -11,8 +12,7 @@
 
 #define BUF_SIZE 65536
 
-static void
-ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
+static void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
     // IP info
     struct iphdr *ipHeader = (struct iphdr *) (dataBuffer + sizeof(struct ethhdr));
     uint version = ipHeader->version;
@@ -43,15 +43,13 @@ ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
     }
 }
 
-int
-main(int argc, char **argv) {
-    int protocolFlag = -1;
-    GetTypeArgv(&protocolFlag, argv, argc);
+int main(int argc, char **argv) {
+    int protocolFlag = GetTypeArgv(argv, argc);
 
     int fd = Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP));
 
-    uint8_t dataBuffer[BUF_SIZE];
-    IsNull(dataBuffer, "Failed to allocate memory for data buffer");
+    uint8_t *dataBuffer = (uint8_t *) malloc(BUF_SIZE * sizeof(uint8_t));
+    // IsNull(dataBuffer, "Failed to allocate memory for data buffer");
     while (1) {
         ssize_t dataLength = Recv(fd, dataBuffer, BUF_SIZE, 0);
         if (dataLength <= (ssize_t)(sizeof(struct ethhdr) + sizeof(struct iphdr))) continue;

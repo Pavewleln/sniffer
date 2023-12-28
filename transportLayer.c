@@ -8,19 +8,16 @@
 #include "include/transportLayer.h"
 #include "include/applicationLayer.h"
 
-void
-PrintInfoTCP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer,
+void PrintInfoTCP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer,
              const uint dataLength) {
     struct tcphdr *tcpHeader = (struct tcphdr *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4));
     uint16_t sourcePort = ntohs(tcpHeader->source);
     uint16_t destinationPort = ntohs(tcpHeader->dest);
     printf("TCP, %s.%u > %s.%u\n", sourceIp, sourcePort, destinationIp, destinationPort);
     PrintInfoHTTP(sourcePort, destinationPort, ipHeader, tcpHeader, dataBuffer, dataLength);
-//    PrintInfoDNS(sourcePort, destinationPort, ipHeader, dataBuffer, dataLength, sizeof(struct tcphdr));
 }
 
-void
-PrintInfoUDP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer,
+void PrintInfoUDP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer,
              const uint dataLength) {
     struct udphdr *udpHeader = (struct udphdr *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4));
     uint16_t sourcePort = ntohs(udpHeader->source);
@@ -29,8 +26,7 @@ PrintInfoUDP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHe
     PrintInfoDNS(sourcePort, destinationPort, ipHeader, dataBuffer, dataLength, sizeof(struct udphdr));
 }
 
-void
-PrintInfoICMP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer) {
+void PrintInfoICMP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer) {
     struct icmphdr *icmpHeader = (struct icmphdr *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4));
     printf("ICMP, %s > %s\n", sourceIp, destinationIp);
     printf("ICMP Type: %u\n", icmpHeader->type);

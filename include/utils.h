@@ -1,19 +1,14 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-void
-GetCurrentDate(char *date_string, size_t dataLength);
+void GetCurrentDate(char *date_string, size_t dataLength);
 
-void
-GetTypeArgv(int *protocolFlag, char **argv, int argc);
+int GetTypeArgv(char **argv, int argc);
 
-void
-Dump(const unsigned char *data, const uint dataLength);
+void Dump(const unsigned char *data, const uint dataLength);
 
-void
-IsError(int result, const char *errorMessage);
+void IsError(int result, const char *errorMessage);
 
-void
-IsNull(void *result, const char *errorMessage);
+void IsNull(void *result, const char *errorMessage);
 
 #endif

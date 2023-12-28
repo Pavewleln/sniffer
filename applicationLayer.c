@@ -13,18 +13,15 @@
 #define DNS_PORT 53
 #define DNS_FLAG_RESPONSE 0x8000
 
-static int
-IsHTTPPort(const uint16_t sourcePort, const uint16_t destinationPort) {
+static int IsHTTPPort(const uint16_t sourcePort, const uint16_t destinationPort) {
     return (sourcePort == HTTP_PORT || destinationPort == HTTP_PORT);
 }
 
-static int
-IsDNSPort(const uint16_t sourcePort, const uint16_t destinationPort) {
+static int IsDNSPort(const uint16_t sourcePort, const uint16_t destinationPort) {
     return (sourcePort == DNS_PORT || destinationPort == DNS_PORT);
 }
 
-static int
-IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
+static int IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
     if (tcpPayloadLen < 4) return 0;
 
     if (memcmp(tcpPayload, "GET", 3) == 0 || memcmp(tcpPayload, "POST", 4) == 0 ||
@@ -41,26 +38,23 @@ IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
     return 0;
 }
 
-void
-PrintInfoHTTP(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
-              struct tcphdr *tcpHeader, uint8_t *dataBuffer,
-              const uint dataLength) {
+void PrintInfoHTTP(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
+                   struct tcphdr *tcpHeader, uint8_t *dataBuffer,
+                   const uint dataLength) {
     if (!IsHTTPPort(sourcePort, destinationPort)) return;
 
     const uint8_t *httpData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                  (tcpHeader->doff * 4));
     const uint httpDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - (tcpHeader->doff * 4);
 
-//    if (IsHTTPPacket(httpData, dataLength))
-        Dump(httpData, httpDataLength);
+    if (IsHTTPPacket(httpData, dataLength)) Dump(httpData, httpDataLength);
 
     // If is not response and is not request, this is not http packet
     return;
 }
 
-void
-PrintInfoDNS(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader, uint8_t *dataBuffer,
-             const uint dataLength, size_t transportHdr) {
+void PrintInfoDNS(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
+                  uint8_t *dataBuffer, const uint dataLength, size_t transportHdr) {
     if (!IsDNSPort(sourcePort, destinationPort)) return;
 
     const uint8_t *dnsData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
