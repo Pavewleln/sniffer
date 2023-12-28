@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include "include/utils.h"
 
-void GetCurrentDate(char *dateString, size_t dataLength) {
+void GetCurrentDate(char *dateString, const size_t dataLength) {
     time_t currentTime = time(NULL);
     struct tm *localTime = localtime(&currentTime);
     strftime(dateString, dataLength, "%Y-%m-%d, %H:%M:%S", localTime);
@@ -55,14 +55,14 @@ void Dump(const uint8_t *data, const uint dataLength) {
     }
 }
 
-void IsError(int result, const char *errorMessage) {
+void IsError(int result, char *errorMessage) {
     if (result == -1) {
         perror(errorMessage);
         exit(EXIT_FAILURE);
     }
 }
 
-void IsNull(void *result, const char *errorMessage) {
+void IsNull(void *result, char *errorMessage) {
     if (result == NULL) {
         perror(errorMessage);
         exit(EXIT_FAILURE);

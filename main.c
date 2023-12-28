@@ -12,7 +12,7 @@
 
 #define BUF_SIZE 65536
 
-static void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
+static void ProcessPacket(const uint8_t *dataBuffer, const ssize_t dataLength) {
     // IP info
     struct iphdr *ipHeader = (struct iphdr *) (dataBuffer + sizeof(struct ethhdr));
     uint version = ipHeader->version;

@@ -27,7 +27,7 @@ static int IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
     return 0;
 }
 
-void PrintInfoHTTP(struct iphdr *ipHeader, struct tcphdr *tcpHeader, uint8_t *dataBuffer, const uint dataLength) {
+void PrintInfoHTTP(const struct iphdr *ipHeader, const struct tcphdr *tcpHeader, const uint8_t *dataBuffer, const uint dataLength) {
 
     const uint8_t *httpData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                  (tcpHeader->doff * 4));
@@ -39,7 +39,7 @@ void PrintInfoHTTP(struct iphdr *ipHeader, struct tcphdr *tcpHeader, uint8_t *da
     return;
 }
 
-void PrintInfoDNS(struct iphdr *ipHeader, uint8_t *dataBuffer, const uint dataLength, size_t transportHdr) {
+void PrintInfoDNS(const struct iphdr *ipHeader, const uint8_t *dataBuffer, const uint dataLength, const size_t transportHdr) {
 
     const uint8_t *dnsData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                 transportHdr);

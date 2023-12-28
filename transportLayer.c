@@ -19,7 +19,7 @@ static int IsDNSPort(const uint16_t sourcePort, const uint16_t destinationPort) 
     return (sourcePort == DNS_PORT || destinationPort == DNS_PORT);
 }
 
-void PrintInfoTCP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer,
+void PrintInfoTCP(const char *sourceIp, const char *destinationIp, const struct iphdr *ipHeader, const uint8_t *dataBuffer,
                   const uint dataLength) {
     struct tcphdr *tcpHeader = (struct tcphdr *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4));
     uint16_t sourcePort = ntohs(tcpHeader->source);
@@ -30,7 +30,7 @@ void PrintInfoTCP(const char *sourceIp, const char *destinationIp, struct iphdr 
         PrintInfoHTTP(ipHeader, tcpHeader, dataBuffer, dataLength);
 }
 
-void PrintInfoUDP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer,
+void PrintInfoUDP(const char *sourceIp, const char *destinationIp, const struct iphdr *ipHeader, const uint8_t *dataBuffer,
                   const uint dataLength) {
     struct udphdr *udpHeader = (struct udphdr *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4));
     uint16_t sourcePort = ntohs(udpHeader->source);
@@ -40,7 +40,7 @@ void PrintInfoUDP(const char *sourceIp, const char *destinationIp, struct iphdr 
         PrintInfoDNS(ipHeader, dataBuffer, dataLength, sizeof(struct udphdr));
 }
 
-void PrintInfoICMP(const char *sourceIp, const char *destinationIp, struct iphdr *ipHeader, uint8_t *dataBuffer) {
+void PrintInfoICMP(const char *sourceIp, const char *destinationIp, const struct iphdr *ipHeader, const uint8_t *dataBuffer) {
     struct icmphdr *icmpHeader = (struct icmphdr *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4));
     printf("ICMP, %s > %s\n", sourceIp, destinationIp);
     printf("ICMP Type: %u\n", icmpHeader->type);
