@@ -9,17 +9,19 @@
 #include "include/applicationLayer.h"
 
 #define DNS_FLAG_RESPONSE 0x8000
+static int IsHTTPPacket(const uint8_t *httpData, const int httpDataLength);
 
-static int IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
-    if (tcpPayloadLen < 4) return 0;
 
-    if (memcmp(tcpPayload, "GET", 3) == 0 || memcmp(tcpPayload, "POST", 4) == 0 ||
-        memcmp(tcpPayload, "PUT", 3) == 0 || memcmp(tcpPayload, "DELETE", 6) == 0 ||
-        memcmp(tcpPayload, "OPTIONS", 7) == 0 || memcmp(tcpPayload, "HEAD", 4) == 0 ||
-        memcmp(tcpPayload, "PATCH", 5) == 0) {
+static int IsHTTPPacket(const uint8_t *httpData, const int httpDataLength) {
+    if (httpDataLength < 4) return 0;
+
+    if (memcmp(httpData, "GET", 3) == 0 || memcmp(httpData, "POST", 4) == 0 ||
+        memcmp(httpData, "PUT", 3) == 0 || memcmp(httpData, "DELETE", 6) == 0 ||
+        memcmp(httpData, "OPTIONS", 7) == 0 || memcmp(httpData, "HEAD", 4) == 0 ||
+        memcmp(httpData, "PATCH", 5) == 0) {
         printf("HTTP Request\n");
         return 1;
-    } else if (memcmp(tcpPayload, "HTTP", 4) == 0) {
+    } else if (memcmp(httpData, "HTTP", 4) == 0) {
         printf("HTTP Response\n");
         return 1;
     }
@@ -31,9 +33,9 @@ void PrintInfoHTTP(const struct iphdr *ipHeader, const struct tcphdr *tcpHeader,
 
     const uint8_t *httpData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                  (tcpHeader->doff * 4));
-    const uint httpDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - (tcpHeader->doff * 4);
+    const int httpDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - (tcpHeader->doff * 4);
 
-    if (IsHTTPPacket(httpData, dataLength)) Dump(httpData, httpDataLength);
+    if (IsHTTPPacket(httpData, httpDataLength)) Dump(httpData, httpDataLength);
 
     // If is not response and is not request, this is not http packet
     return;
@@ -49,7 +51,9 @@ void PrintInfoDNS(const struct iphdr *ipHeader, const uint8_t *dataBuffer, const
     // If qdcount is 0, then the packet is not a valid DNS packet.
     if (ntohs(header->qdcount) <= 0) return;
 
-    const uint dnsDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - transportHdr;
+    const int dnsDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - transportHdr;
+
+    if(dnsDataLength <= 0) return;
 
     uint16_t flags = ntohs(*(uint16_t *) dnsData);
     if ((flags & DNS_FLAG_RESPONSE) == 0) {
