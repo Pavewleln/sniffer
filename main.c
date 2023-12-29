@@ -1,3 +1,4 @@
+#include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,6 +10,7 @@
 #include "include/utils.h"
 #include "include/erproc.h"
 #include "include/transportLayer.h"
+#include "interface/include/windowInit.h"
 
 #define BUF_SIZE 65536
 
@@ -44,6 +46,8 @@ static void ProcessPacket(const uint8_t *dataBuffer, const ssize_t dataLength) {
 }
 
 int main(int argc, char **argv) {
+    gtk_init(&argc, &argv);
+    WindowInit();
     int protocolFlag = GetTypeArgv(argv, argc);
 
     int fd = Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP));
