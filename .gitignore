@@ -13,3 +13,6 @@ sniffer
 *.bak
 *.cache
 *.DS_Store
+
+.idea
+.vs
