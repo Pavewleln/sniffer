@@ -3,6 +3,7 @@
 sniffer
 
 .vscode
+.vs
 .idea
 *.swp
 *~
@@ -13,6 +14,3 @@ sniffer
 *.bak
 *.cache
 *.DS_Store
-
-.idea
-.vs
