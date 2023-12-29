@@ -8,29 +8,20 @@
 #include "include/utils.h"
 #include "include/applicationLayer.h"
 
-#define HTTP_PORT 80
-
-#define DNS_PORT 53
 #define DNS_FLAG_RESPONSE 0x8000
+static int IsHTTPPacket(const uint8_t *httpData, const int httpDataLength);
 
-static int IsHTTPPort(const uint16_t sourcePort, const uint16_t destinationPort) {
-    return (sourcePort == HTTP_PORT || destinationPort == HTTP_PORT);
-}
 
-static int IsDNSPort(const uint16_t sourcePort, const uint16_t destinationPort) {
-    return (sourcePort == DNS_PORT || destinationPort == DNS_PORT);
-}
+static int IsHTTPPacket(const uint8_t *httpData, const int httpDataLength) {
+    if (httpDataLength < 4) return 0;
 
-static int IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
-    if (tcpPayloadLen < 4) return 0;
-
-    if (memcmp(tcpPayload, "GET", 3) == 0 || memcmp(tcpPayload, "POST", 4) == 0 ||
-        memcmp(tcpPayload, "PUT", 3) == 0 || memcmp(tcpPayload, "DELETE", 6) == 0 ||
-        memcmp(tcpPayload, "OPTIONS", 7) == 0 || memcmp(tcpPayload, "HEAD", 4) == 0 ||
-        memcmp(tcpPayload, "PATCH", 5) == 0) {
+    if (memcmp(httpData, "GET", 3) == 0 || memcmp(httpData, "POST", 4) == 0 ||
+        memcmp(httpData, "PUT", 3) == 0 || memcmp(httpData, "DELETE", 6) == 0 ||
+        memcmp(httpData, "OPTIONS", 7) == 0 || memcmp(httpData, "HEAD", 4) == 0 ||
+        memcmp(httpData, "PATCH", 5) == 0) {
         printf("HTTP Request\n");
         return 1;
-    } else if (memcmp(tcpPayload, "HTTP", 4) == 0) {
+    } else if (memcmp(httpData, "HTTP", 4) == 0) {
         printf("HTTP Response\n");
         return 1;
     }
@@ -38,24 +29,19 @@ static int IsHTTPPacket(const uint8_t *tcpPayload, const uint tcpPayloadLen) {
     return 0;
 }
 
-void PrintInfoHTTP(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
-                   struct tcphdr *tcpHeader, uint8_t *dataBuffer,
-                   const uint dataLength) {
-    if (!IsHTTPPort(sourcePort, destinationPort)) return;
+void PrintInfoHTTP(const struct iphdr *ipHeader, const struct tcphdr *tcpHeader, const uint8_t *dataBuffer, const uint dataLength) {
 
     const uint8_t *httpData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                  (tcpHeader->doff * 4));
-    const uint httpDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - (tcpHeader->doff * 4);
+    const int httpDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - (tcpHeader->doff * 4);
 
-    if (IsHTTPPacket(httpData, dataLength)) Dump(httpData, httpDataLength);
+    if (IsHTTPPacket(httpData, httpDataLength)) Dump(httpData, httpDataLength);
 
     // If is not response and is not request, this is not http packet
     return;
 }
 
-void PrintInfoDNS(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
-                  uint8_t *dataBuffer, const uint dataLength, size_t transportHdr) {
-    if (!IsDNSPort(sourcePort, destinationPort)) return;
+void PrintInfoDNS(const struct iphdr *ipHeader, const uint8_t *dataBuffer, const uint dataLength, const size_t transportHdr) {
 
     const uint8_t *dnsData = (const uint8_t *) (dataBuffer + sizeof(struct ethhdr) + (ipHeader->ihl * 4) +
                                                 transportHdr);
@@ -65,7 +51,9 @@ void PrintInfoDNS(const uint16_t sourcePort, const uint16_t destinationPort, str
     // If qdcount is 0, then the packet is not a valid DNS packet.
     if (ntohs(header->qdcount) <= 0) return;
 
-    const uint dnsDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - transportHdr;
+    const int dnsDataLength = dataLength - sizeof(struct ethhdr) - (ipHeader->ihl * 4) - transportHdr;
+
+    if(dnsDataLength <= 0) return;
 
     uint16_t flags = ntohs(*(uint16_t *) dnsData);
     if ((flags & DNS_FLAG_RESPONSE) == 0) {

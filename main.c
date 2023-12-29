@@ -12,7 +12,7 @@
 
 #define BUF_SIZE 65536
 
-static void ProcessPacket(uint8_t *dataBuffer, ssize_t dataLength) {
+static void ProcessPacket(const uint8_t *dataBuffer, const ssize_t dataLength) {
     // IP info
     struct iphdr *ipHeader = (struct iphdr *) (dataBuffer + sizeof(struct ethhdr));
     uint version = ipHeader->version;
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     int fd = Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP));
 
     uint8_t *dataBuffer = (uint8_t *) malloc(BUF_SIZE * sizeof(uint8_t));
-    // IsNull(dataBuffer, "Failed to allocate memory for data buffer");
+    IsNull(dataBuffer, "Failed to allocate memory for data buffer");
     while (1) {
         ssize_t dataLength = Recv(fd, dataBuffer, BUF_SIZE, 0);
         if (dataLength <= (ssize_t)(sizeof(struct ethhdr) + sizeof(struct iphdr))) continue;

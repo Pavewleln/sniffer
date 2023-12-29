@@ -1,10 +1,7 @@
 #ifndef APPLICATION_LAYER_H
 #define APPLICATION_LAYER_H
+void PrintInfoHTTP(const struct iphdr *ipHeader, const struct tcphdr *tcpHeader, const uint8_t *dataBuffer, const uint dataLength);
 
-void PrintInfoHTTP(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
-              struct tcphdr *tcpHeader, uint8_t *dataBuffer, const uint dataLength);
-
-void PrintInfoDNS(const uint16_t sourcePort, const uint16_t destinationPort, struct iphdr *ipHeader,
-             uint8_t *dataBuffer, const uint dataLength, size_t transportHdr);
+void PrintInfoDNS(const struct iphdr *ipHeader, const uint8_t *dataBuffer, const uint dataLength, const size_t transportHdr);
 
 #endif
