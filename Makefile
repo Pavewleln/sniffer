@@ -1,11 +1,11 @@
 TARGET = sniffer
 CC = gcc
-CFLAGS = -Wall -Wextra `pkg-config --cflags gtk+-3.0`
+CFLAGS = -Wall -Wextra -lpthread `pkg-config --cflags gtk+-3.0`
 LDFLAGS = `pkg-config --libs gtk+-3.0`
 RM = rm -rf
-INTERFACE_SRCS = windowInit.c
+INTERFACE_SRCS = interface/windowInit.c
 MAIN_SRCS = main.c erproc.c utils.c transportLayer.c applicationLayer.c
-SRCS = $(MAIN_SRCS) interface/$(INTERFACE_SRCS)
+SRCS = $(MAIN_SRCS) $(INTERFACE_SRCS)
 BUILD_DIR = build
 OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCS))
 
